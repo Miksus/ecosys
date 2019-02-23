@@ -9,7 +9,27 @@
   - "position": {"ask", "bid"} in trading
   - "order_book": dict containing all information of the participants of trade
 
+### Asset
+
+Asset =  A thing that holds value and this value is universally the same
+         for all the items in the asset in specific time. Ie.
+            Asset: 
+               - Nokia shares, 
+               - Oil,
+               - Banana 
+            NOT Asset itself (too generic): 
+               - Appartment (but can be if "Appartment in location X with N rooms"),
+               - Car (but can be if "Mercedes Model XYZ"),
+               - 
+
+
+### Stockmarket
+
+Stockmarket = Collection of markets
+
 ### Market
+
+Market = Platform to trade one asset
 
 Attributes/variables:
   - "party": name/identification of the party of a trade, contract, offer et cetera

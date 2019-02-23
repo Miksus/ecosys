@@ -9,8 +9,22 @@ https://www.investopedia.com/terms/o/order-book.asp
 """
 
 
-class MarketPlace(ABC):
+class Market(ABC):
+    """Abstract class for markets
+
+    Market is defined as place where participants
+    trade assets/goods/et cetera.
+    In this context, markets are (somewhat) perfect:
+        - Bidders and askers can leave at will
+        
+    Use Auctions for imperfect markets
     
+    Attributes:
+        _dtype_mapping {Dict[Dict[Tuple]]} -- dict of numpy dtype 
+
+    """
+
+
 
     _dtype_mapping = {
         "limit": {'names':('party', 'price', 'quantity'), 'formats':('U10', 'float32', 'u4')}
@@ -68,7 +82,6 @@ class MarketPlace(ABC):
         """
         # TODO: Remove unused bits (bids, asks)
         # TODO: check get_disclosed_price variables
-        #! BUG: get_disclosed_price does not round right
 
         # For convenience
         bids = self.order_book[bid_origin]["bid"]

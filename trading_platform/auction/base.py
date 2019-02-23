@@ -2,7 +2,7 @@
 import numpy as np
 
 class Auction:
-    #! UNDER DEVELOPMENT
+    #! NOT TESTED
 
     _dtype_mapping = {
         "offer": {'names':('party', 'price'), 'formats':('U10', 'float32', 'u4')},
