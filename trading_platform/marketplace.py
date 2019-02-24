@@ -4,7 +4,7 @@ from .market.stockmarket import StockMarket
 class StockExchange:
     """Collection of markets
     """
-
+    # TODO: This should be done by asset object!
     def __init__(self, assets:List[Asset], name=None):
         
         self.name = name
