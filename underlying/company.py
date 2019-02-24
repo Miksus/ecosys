@@ -1,3 +1,0 @@
-
-#! UNDER DEVELOPMENT
-class Company:

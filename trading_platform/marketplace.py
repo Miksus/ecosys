@@ -5,7 +5,7 @@ class StockExchange:
     """Collection of markets
     """
 
-    def __init__(self, name=None, assets:List[Asset]):
+    def __init__(self, assets:List[Asset], name=None):
         
         self.name = name
         self._markets = {}

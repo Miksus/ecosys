@@ -1,5 +1,0 @@
-
-
-
-Common methods for assets
- - 
