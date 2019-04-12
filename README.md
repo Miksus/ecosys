@@ -23,7 +23,7 @@
 - Market Matcher that support multiple order types
 
 ## Usage
-> Please see [Market Matching Demo](docs\maket_demo.ipynb)
+> Please see [Market Matching Demo](docs/maket_demo.ipynb)
 
 ---
 
