@@ -11,10 +11,10 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 
 
-from .base import MarketPlace 
+from .base import MarketMatcher
 from .mixins import LimitOrderMixin, MarketOrderMixin, StopOrderMixin
 
-class StockMarket(MarketPlace, LimitOrderMixin, MarketOrderMixin, StopOrderMixin):
+class StockMatcher(MarketMatcher, LimitOrderMixin, MarketOrderMixin, StopOrderMixin):
 
     _dtype_mapping = {
         "limit": {'names':('party', 'price', 'quantity'), 'formats':('U10', 'float32', 'u4')},
@@ -47,10 +47,6 @@ class StockMarket(MarketPlace, LimitOrderMixin, MarketOrderMixin, StopOrderMixin
         self._settle_limit_orders()
 
 
-
-
-    
-
 # Analytical
     def __str__(self):
         return(
@@ -64,6 +60,7 @@ class StockMarket(MarketPlace, LimitOrderMixin, MarketOrderMixin, StopOrderMixin
 
     @property
     def spread(self):
+        # !BUG: lowest_ask and highest_bid no longer defined
         return self.lowest_ask - self.highest_bid
 
     @property
@@ -112,7 +109,6 @@ class StockMarket(MarketPlace, LimitOrderMixin, MarketOrderMixin, StopOrderMixin
         return fig
     
 
-
     def plot_order_animate(self):
         plt.ion()
         n_bins =50
@@ -134,4 +130,7 @@ class StockMarket(MarketPlace, LimitOrderMixin, MarketOrderMixin, StopOrderMixin
             hist_bid = ax.hist(bids["price"], weights=bids["quantity"], cumulative=-1, label='Bid cumulative')
         self._plot_state = (hist_ask, hist_bid, fig, ax)
 
+    @property
+    def historical(self):
+        return pd.DataFrame(self._historical_trades)
 

@@ -1,0 +1,1 @@
+from .npc.investor import ActiveInvestor

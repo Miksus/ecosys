@@ -9,7 +9,7 @@ https://www.investopedia.com/terms/o/order-book.asp
 """
 
 
-class Market(ABC):
+class MarketMatcher(ABC):
     """Abstract class for markets
 
     Market is defined as place where participants
@@ -196,14 +196,28 @@ class Market(ABC):
 
     @staticmethod
     def trade_orders(bid, ask, price, quantity, asset):
-        currency = '€'
-        print("")
-        print("TRADING")
-        print(f"Ask <{'-'*(len(ask['party']) + len(bid['party']))}> Bid")
-        print(f'{ask["party"]} <{"-"*(len(ask["party"]) + len(bid["party"]))}> {bid["party"]}')
-        print(f"{quantity} x {asset}")
-        print(f"{price}{currency} x {quantity} = {quantity*price}{currency}")
-        print("-------")
-        print("") 
+        """All the fulfilled trades go here!
+        This method should (in future):
+            - Signal asker's account to remove {asset} by amount of {quantity} 
+              and add {quantity * price} amount of cash
+            - Signal bidder's account to remove {quantity * price} amount of cash
+              and add {asset} by amount of {quantity}
+        
+        Arguments:
+            bid {[type]} -- [description]
+            ask {[type]} -- [description]
+            price {[type]} -- [description]
+            quantity {[type]} -- [description]
+            asset {[type]} -- [description]
+        """
+        # currency = '€'
+        # print("")
+        # print("TRADING")
+        # print(f"Ask <{'-'*(len(ask['party']) + len(bid['party']))}> Bid")
+        # print(f'{ask["party"]} <{"-"*(len(ask["party"]) + len(bid["party"]))}> {bid["party"]}')
+        # print(f"{quantity} x {asset}")
+        # print(f"{price}{currency} x {quantity} = {quantity*price}{currency}")
+        # print("-------")
+        # print("") 
 
 
