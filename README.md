@@ -10,7 +10,7 @@
 
 
 ---
-
+'
 ## Installation
 
 
@@ -23,10 +23,15 @@
 - Market Matcher that support multiple order types
 
 ## Usage
-> Please see [Market Matching Demo](../docs/market_demo.ipynb)
+> Please see [Market Matching Demo](docs\maket_demo.ipynb)
 
 ---
 
+## Author
+
+* **Mikael Koli** - [Miksus](https://github.com/Miksus) - koli.mikael@gmail.com
+
+---
 ## License
 
 [![License](http://img.shields.io/:license-mit-blue.svg?style=flat-square)](http://badges.mit-license.org)
