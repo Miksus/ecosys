@@ -2,6 +2,8 @@
 
 # EcoSys
 
+[![Build Status](https://travis-ci.com/Miksus/ecosys.svg?branch=master)](https://travis-ci.com/Miksus/ecosys)
+
 > Market simulator for stock mechanics
 
 > Simulator, Virtual investing, Educational
