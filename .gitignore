@@ -24,3 +24,6 @@ venv.bak/
 
 # VS Code
 .vscode/
+
+# Testing
+.pytest_cache/
