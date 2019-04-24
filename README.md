@@ -22,8 +22,16 @@
 ## Features
 - Market Matcher that support multiple order types
 
+### Upcoming Features
+- Simulated traders for inspecting behavioral aspects of trading and the mechanics of trading decision making
+- Compete with the traders
+- IPO system
+
 ## Usage
 > Please see [Market Matching Demo](docs/maket_demo.ipynb)
+
+## Test
+Pytest was chosen as testing suites. Tests are found in test directory. 
 
 ---
 
