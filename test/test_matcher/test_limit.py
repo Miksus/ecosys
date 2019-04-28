@@ -17,6 +17,18 @@ def test_fulfilling_equal():
 
     assert (5.0 == market.last_price) and (0 == bid_quantity) and (0 == ask_quantity)
 
+def test_fulfilling_equal_decimals():
+    market = StockMatcher()
+
+    market.place_bid(price=5.55, quantity=200, party="Bidder")
+    market.place_ask(price=5.55, quantity=200, party="Asker")
+    market.clear()
+
+    bid_quantity = market.order_book["limit"]["bid"]["quantity"].sum()
+    ask_quantity = market.order_book["limit"]["ask"]["quantity"].sum()
+
+    assert (5.55 == market.last_price) and (0 == bid_quantity) and (0 == ask_quantity)
+
 def test_fulfilling_unequal():
     market = StockMatcher()
 
