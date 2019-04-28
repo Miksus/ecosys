@@ -8,6 +8,7 @@ import pandas as pd
 
 
 import matplotlib.pyplot as plt
+import matplotlib.ticker as ticker
 import seaborn as sns
 
 
@@ -60,8 +61,7 @@ class StockMatcher(MarketMatcher, LimitOrderMixin, MarketOrderMixin, StopOrderMi
 
     @property
     def spread(self):
-        # !BUG: lowest_ask and highest_bid no longer defined
-        return self.lowest_ask - self.highest_bid
+        return self.lowest_ask_price - self.highest_bid_price
 
     @property
     def total_quantities(self):
@@ -129,6 +129,55 @@ class StockMatcher(MarketMatcher, LimitOrderMixin, MarketOrderMixin, StopOrderMi
             hist_ask = ax.hist(asks["price"], weights=asks["quantity"], cumulative=True, label='Ask cumulative')
             hist_bid = ax.hist(bids["price"], weights=bids["quantity"], cumulative=-1, label='Bid cumulative')
         self._plot_state = (hist_ask, hist_bid, fig, ax)
+
+    def plot_order_book(self, tick_frequency=5):
+
+        bids = self.order_book["limit"]["bid"].copy()
+        asks = self.order_book["limit"]["ask"].copy()
+
+        bids["quantity"] = bids["quantity"]
+        asks["quantity"] = - asks["quantity"]
+
+        orders = np.append(bids, asks)
+
+        price_ticks = (orders["price"] * 100).round(0).astype("int")
+        quantity = orders["quantity"].astype("int")
+
+        ser_plot = (
+            pd.Series(quantity, index=price_ticks)
+            .groupby(price_ticks).sum()
+            .reindex(range(price_ticks.min(), price_ticks.max() + 1))
+        )
+
+        colors = ser_plot.apply(lambda row: "orangered" if row <0 else "green")
+
+        ax = plt.axes()
+        plt.barh(ser_plot.index, ser_plot.values, align="center", height=1, 
+                color=colors,
+                edgecolor="k", 
+                #tick_label=(ser_plot.index/100).map('{:.2f}'.format)
+                )
+        ax.yaxis.set_major_formatter(ticker.FuncFormatter(lambda x, pos: f"{x/100:.2f}"))
+        ax.yaxis.set_major_locator(ticker.MultipleLocator(tick_frequency))
+
+        ax.axvline(0, color="k")
+        if self.last_price:
+            ax.axhline(self.last_price*100, color="b", linestyle='--', label="Last Price")
+
+        prop = dict(boxstyle='round', facecolor='lightgrey', alpha=0.5)
+        ax.text(0.05, 0.95, "Asks", fontsize=14,
+                horizontalalignment='left', transform = ax.transAxes,
+                verticalalignment='top', color="orangered",
+                bbox=prop)
+        ax.text(0.95, 0.05, "Bids", fontsize=14,
+                horizontalalignment='right', transform = ax.transAxes,
+                verticalalignment='bottom', color="green",
+                bbox=prop)
+
+        plt.title(f"Order book: {self.asset}" if self.asset else "Order book")
+        plt.ylabel("Price")
+        plt.xlabel("Quantity")
+        
 
     @property
     def historical(self):
