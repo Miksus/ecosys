@@ -1,19 +1,22 @@
 
-# RAW VERSION
+"""
+Master class for stock order matcher
 
-
+"""
 
 import numpy as np
 import pandas as pd
-
 
 import matplotlib.pyplot as plt
 import matplotlib.ticker as ticker
 import seaborn as sns
 
-
 from .base import MarketMatcher
 from .mixins import LimitOrderMixin, MarketOrderMixin, StopOrderMixin
+
+# TODO:
+#   1. Turn prices to integers (cents) under the hood
+#       - Should not change the usage of this class
 
 class StockMatcher(MarketMatcher, LimitOrderMixin, MarketOrderMixin, StopOrderMixin):
 
@@ -22,7 +25,7 @@ class StockMatcher(MarketMatcher, LimitOrderMixin, MarketOrderMixin, StopOrderMi
         "market": {'names':('party', 'quantity'), 'formats':('U10', 'u4')},
         "stop": {'names':('party', 'price', 'quantity'), 'formats':('U10', 'float32', 'u4')}
     }
-    #//trade_func = trade_orders
+
 # Set orders
     def place_ask(self, order_type="limit", **params):
         """Place ask (sell) order to market
@@ -46,7 +49,6 @@ class StockMatcher(MarketMatcher, LimitOrderMixin, MarketOrderMixin, StopOrderMi
         self._trigger_stop_orders()
         self._settle_market_orders()
         self._settle_limit_orders()
-
 
 # Analytical
     def __str__(self):
@@ -82,7 +84,16 @@ class StockMatcher(MarketMatcher, LimitOrderMixin, MarketOrderMixin, StopOrderMi
             dfs.append(pd.concat(dfs_book, axis=0, keys=("bid", "ask"), sort=False))
         return pd.concat(dfs, axis=0, keys=("limit", "market", "stop"), sort=False)
 
+# Plots
     def plot_orders(self, fig=None):
+        """Plot cumulative histogram of the orders
+        
+        Keyword Arguments:
+            fig {[type]} -- [description] (default: {None})
+        
+        Returns:
+            [type] -- [description]
+        """
         # x: price
         # y: quantity (cumulative)
         n_bins =50
@@ -108,14 +119,18 @@ class StockMatcher(MarketMatcher, LimitOrderMixin, MarketOrderMixin, StopOrderMi
         ax_hist.legend()
         return fig
     
-
     def plot_order_animate(self):
+        """Plot animated orders in cumulative histogram
+
+        Inspiration: https://en.wikipedia.org/wiki/Order_book_(trading)#/media/File:Order_book_depth_chart.gif
+        """
         plt.ion()
         n_bins =50
         bids = self.order_book["limit"]["bid"]
         asks = self.order_book["limit"]["ask"]
 
         if hasattr(self, "_plot_state"):
+            # To optimize time spent on graphing
             hist_ask, hist_bid, fig, ax = self._plot_state
             ax.cla()
 
@@ -131,7 +146,13 @@ class StockMatcher(MarketMatcher, LimitOrderMixin, MarketOrderMixin, StopOrderMi
         self._plot_state = (hist_ask, hist_bid, fig, ax)
 
     def plot_order_book(self, tick_frequency=5):
-
+        """Plot the orders in barh plot
+        x axis: sum of quantity of orders per price (negative indicate asks)
+        y axis: price (integers of cents under the hood)
+        
+        Keyword Arguments:
+            tick_frequency {int} -- Tick label frequency (default: {5})
+        """
         bids = self.order_book["limit"]["bid"].copy()
         asks = self.order_book["limit"]["ask"].copy()
 
@@ -154,8 +175,7 @@ class StockMatcher(MarketMatcher, LimitOrderMixin, MarketOrderMixin, StopOrderMi
         ax = plt.axes()
         plt.barh(ser_plot.index, ser_plot.values, align="center", height=1, 
                 color=colors,
-                edgecolor="k", 
-                #tick_label=(ser_plot.index/100).map('{:.2f}'.format)
+                edgecolor="k"
                 )
         ax.yaxis.set_major_formatter(ticker.FuncFormatter(lambda x, pos: f"{x/100:.2f}"))
         ax.yaxis.set_major_locator(ticker.MultipleLocator(tick_frequency))
@@ -178,7 +198,6 @@ class StockMatcher(MarketMatcher, LimitOrderMixin, MarketOrderMixin, StopOrderMi
         plt.ylabel("Price")
         plt.xlabel("Quantity")
         
-
     @property
     def historical(self):
         return pd.DataFrame(self._historical_trades)
