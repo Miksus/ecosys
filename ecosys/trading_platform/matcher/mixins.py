@@ -74,9 +74,8 @@ class MarketOrderMixin(ABC):
             - If None market orders found, continue
         3. Repeat with Asks
 
-            """
-        # TODO:
-        #   Streamline
+        """
+        # TODO: Streamline
 
         market_as_bid = ("bid", "oldest_bid_market_order", "ask", "lowest_ask_order")
         market_as_ask = ("ask", "oldest_ask_market_order", "bid", "highest_bid_order")
