@@ -63,7 +63,7 @@ class StockMatcher(MarketMatcher, LimitOrderMixin, MarketOrderMixin, StopOrderMi
         ]
 
         if ticks:
-            trade_ticks = np.mean(ticks)
+            trade_ticks = int(round(np.mean(ticks)))
         else:
             trade_ticks = self._last_trade_ticks
         
