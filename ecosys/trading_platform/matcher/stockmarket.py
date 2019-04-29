@@ -14,16 +14,13 @@ import seaborn as sns
 from .base import MarketMatcher
 from .mixins import LimitOrderMixin, MarketOrderMixin, StopOrderMixin
 
-# TODO:
-#   1. Turn prices to integers (cents) under the hood
-#       - Should not change the usage of this class
 
 class StockMatcher(MarketMatcher, LimitOrderMixin, MarketOrderMixin, StopOrderMixin):
 
     _dtype_mapping = {
-        "limit": {'names':('party', 'price', 'quantity'), 'formats':('U10', 'float32', 'u4')},
-        "market": {'names':('party', 'quantity'), 'formats':('U10', 'u4')},
-        "stop": {'names':('party', 'price', 'quantity'), 'formats':('U10', 'float32', 'u4')}
+        "limit": {'names':('party', 'ticks', 'quantity'), 'formats':('U10', np.uint16, np.uint16)},
+        "market": {'names':('party', 'quantity'), 'formats':('U10', np.uint16)},
+        "stop": {'names':('party', 'ticks', 'quantity'), 'formats':('U10', np.uint16, np.uint16)}
     }
 
 # Set orders
@@ -34,6 +31,10 @@ class StockMatcher(MarketMatcher, LimitOrderMixin, MarketOrderMixin, StopOrderMi
             order_type {str} -- type of the order (default: {"limit"})
             **params -- obligatory information for the order type. See self._dtype_mapping
         """
+        if "price" in params:
+            params["ticks"] = self._price_to_ticks(params["price"])
+            params.pop("price")
+
         self.place_order(book_type=order_type, position="ask", **params)
 
     def place_bid(self, order_type="limit", **params):
@@ -43,12 +44,37 @@ class StockMatcher(MarketMatcher, LimitOrderMixin, MarketOrderMixin, StopOrderMi
             order_type {str} -- [description] (default: {"limit"})
             **params -- obligatory information for the order type. See self._dtype_mapping
         """
+        if "price" in params:
+            params["ticks"] = self._price_to_ticks(params["price"])
+            params.pop("price")
+
         self.place_order(book_type=order_type, position="bid", **params)
 
     def clear(self):
         self._trigger_stop_orders()
         self._settle_market_orders()
         self._settle_limit_orders()
+
+    def _get_disclosed_trade_ticks(self, bid_order, ask_order):
+        ticks = [
+            order["ticks"]
+            for order in (bid_order, ask_order) 
+            if "ticks" in order.dtype.names
+        ]
+
+        if ticks:
+            trade_ticks = np.mean(ticks)
+        else:
+            trade_ticks = self._last_trade_ticks
+        
+        return trade_ticks
+
+    def _get_disclosed_trade_quantity(self, bid_order, ask_order):
+        return min(bid_order["quantity"], ask_order["quantity"])
+
+    @property
+    def last_price(self):
+        return self._ticks_to_price(self._last_trade_ticks)
 
 # Analytical
     def __str__(self):
@@ -82,7 +108,10 @@ class StockMatcher(MarketMatcher, LimitOrderMixin, MarketOrderMixin, StopOrderMi
             for position in ("bid", "ask"):
                 dfs_book.append(pd.DataFrame(self.order_book[book_type][position]))
             dfs.append(pd.concat(dfs_book, axis=0, keys=("bid", "ask"), sort=False))
-        return pd.concat(dfs, axis=0, keys=("limit", "market", "stop"), sort=False)
+        df = pd.concat(dfs, axis=0, keys=("limit", "market", "stop"), sort=False)
+        df["price"] = df["ticks"].apply(self._ticks_to_price)
+        df = df.drop(["ticks"], axis=1)
+        return df
 
 # Plots
     def plot_orders(self, fig=None):

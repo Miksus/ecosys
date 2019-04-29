@@ -4,7 +4,7 @@ from abc import ABC, abstractmethod
 import numpy as np
 
 class LimitOrderMixin(ABC):
-
+    n_ticks = 2
     def _settle_limit_orders(self):
         # 1. Get orders that are in the spread (between ask and bid prices)
         # 2. Fulfill the orders from lowest to highest
@@ -15,7 +15,7 @@ class LimitOrderMixin(ABC):
             asks = state.order_book["limit"]["ask"]
             return bids.size > 0 and asks.size > 0
 
-        while has_limit_orders(state=self) and self.highest_bid_price >= self.lowest_ask_price:
+        while has_limit_orders(state=self) and self._highest_bid_ticks >= self._lowest_ask_ticks:
             # Fulfilling till the spread exists
 
             highest_bid_order = self.highest_bid_order
@@ -29,37 +29,65 @@ class LimitOrderMixin(ABC):
 
     @property
     def highest_bid_order(self):
-        "Order with maximum price the market is willing to buy"
+        "Order with maximum ticks the market is willing to buy"
         bids = self.order_book["limit"]["bid"]
-        return bids[np.argmax(bids["price"], axis=0)]
+        return bids[np.argmax(bids["ticks"], axis=0)]
 
     @property
     def lowest_ask_order(self):
-        "Order withminimum price the market is willing to sell"
+        "Order with minimum ticks the market is willing to sell"
         asks = self.order_book["limit"]["ask"]
         try:
-            return asks[np.argmin(asks["price"], axis=0)]
+            return asks[np.argmin(asks["ticks"], axis=0)]
+        except ValueError:
+            return None
+
+    @property
+    def _highest_bid_ticks(self):
+        "Maximum price the market is willing to buy in ticks"
+        bids = self.order_book["limit"]["bid"]
+        try:
+            ticks = bids["ticks"].max()
+            return ticks
+        except ValueError:
+            return None
+
+    @property
+    def _lowest_ask_ticks(self):
+        "Minimum price the market is willing to sell in ticks"
+        asks = self.order_book["limit"]["ask"]
+        try:
+            ticks = asks["ticks"].min()
+            return ticks
         except ValueError:
             return None
 
     @property
     def highest_bid_price(self):
         "Maximum price the market is willing to buy"
-        bids = self.order_book["limit"]["bid"]
-        try:
-            return bids["price"].max()
-        except ValueError:
-            return None
+        ticks = self._highest_bid_ticks
+        return self._ticks_to_price(ticks)
 
     @property
     def lowest_ask_price(self):
         "Minimum price the market is willing to sell"
-        asks = self.order_book["limit"]["ask"]
-        try:
-            return asks["price"].min()
-        except ValueError:
-            return None
+        ticks = self._lowest_ask_ticks
+        return self._ticks_to_price(ticks)
 
+    def _price_to_ticks(self, price):
+        if price is None:
+            return None
+        price = round(price, self.n_ticks)
+        multiplier = 10 ** self.n_ticks
+        ticks = int(price * multiplier)
+        return ticks
+    
+    def _ticks_to_price(self, ticks):
+        if ticks is None:
+            return None
+        divider = 10 ** self.n_ticks
+        price = ticks / divider
+        return price
 
 
 class MarketOrderMixin(ABC):
@@ -133,13 +161,13 @@ class StopOrderMixin(ABC):
         stop_bids = self.order_book["stop"]["bid"]
         stop_asks = self.order_book["stop"]["ask"]
 
-        if self.last_price is None:
+        if self._last_trade_ticks is None:
             # Cannot trigger any stop orders,
             # no price level
             return
 
-        mask_bids = stop_bids["price"] > self.last_price
-        mask_asks = stop_asks["price"] < self.last_price
+        mask_bids = stop_bids["ticks"] > self._last_trade_ticks
+        mask_asks = stop_asks["ticks"] < self._last_trade_ticks
 
         actived_stop_bids = stop_bids[mask_bids]
         actived_stop_asks = stop_asks[mask_asks]

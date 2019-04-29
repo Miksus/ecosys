@@ -40,7 +40,7 @@ class MarketMatcher(ABC):
         #Order book contain only limit orders
         self.order_book = {}
         self._setup_books()
-        self.last_price = None
+        self._last_trade_ticks = None
         self.asset = asset
 
         self._historical_trades = []
@@ -81,33 +81,13 @@ class MarketMatcher(ABC):
         
         """
         # TODO: Remove unused bits (bids, asks)
-        # TODO: check get_disclosed_price variables
 
         # For convenience
         bids = self.order_book[bid_origin]["bid"]
         asks = self.order_book[ask_origin]["ask"]
 
-        def get_disclosed_price(bid, ask, decimals):
-            prices = [
-                order["price"]
-                for order in (bid_order, ask_order) 
-                if "price" in order.dtype.names
-            ]
-
-            if prices:
-                price = np.mean(prices)
-            else:
-                price = self.last_price
-            
-            #price = np.around(price, decimals=decimals)
-            return round(float(price), decimals)
-
-        def get_disclosed_quantity(bid, ask):
-            return min(bid["quantity"], ask["quantity"])
-
-
-        disclosed_quantity = get_disclosed_quantity(bid_order, ask_order)
-        disclosed_price = get_disclosed_price(bid_order, ask_order, decimals=4)
+        disclosed_quantity = self._get_disclosed_trade_quantity(bid_order, ask_order)
+        disclosed_ticks = self._get_disclosed_trade_ticks(bid_order, ask_order)
 
         # Fulfilled
         bid_order_fulfilled = bid_order.copy()
@@ -129,14 +109,14 @@ class MarketMatcher(ABC):
         self._fulfill_orders(
             bid_order_fulfilled, ask_order_fulfilled, 
             bid_origin=bid_origin, ask_origin=ask_origin,
-            price=disclosed_price, quantity=disclosed_quantity
+            ticks=disclosed_ticks, quantity=disclosed_quantity
         )
 
         # Delete completely fulfilled orders (if any)
         self._delete_fulfilled_orders()
 
     def _fulfill_orders(self, bid_order, ask_order, 
-                        price, quantity, 
+                        ticks, quantity, 
                         bid_origin=None, ask_origin=None):
 
         # Turn orders (np.void) to dict
@@ -153,11 +133,11 @@ class MarketMatcher(ABC):
 
         trade_kwds = dict(
             bid=bid_order, ask=ask_order, 
-            price=price, quantity=quantity,
+            ticks=ticks, quantity=quantity,
         )
         self.trade_orders(asset=self.asset, **trade_kwds)
 
-        self.last_price = price
+        self._last_trade_ticks = ticks
         self.last_quantity = quantity
 
         self._historical_trades.append(trade_kwds)
@@ -195,7 +175,7 @@ class MarketMatcher(ABC):
         self.order_book[book_type][position] = np.append(book, new_order)
 
     @staticmethod
-    def trade_orders(bid, ask, price, quantity, asset):
+    def trade_orders(bid, ask, ticks, quantity, asset):
         """All the fulfilled trades go here!
         This method should (in future):
             - Signal asker's account to remove {asset} by amount of {quantity} 
@@ -216,7 +196,7 @@ class MarketMatcher(ABC):
         # print(f"Ask <{'-'*(len(ask['party']) + len(bid['party']))}> Bid")
         # print(f'{ask["party"]} <{"-"*(len(ask["party"]) + len(bid["party"]))}> {bid["party"]}')
         # print(f"{quantity} x {asset}")
-        # print(f"{price}{currency} x {quantity} = {quantity*price}{currency}")
+        # print(f"{ticks}{currency} x {quantity} = {quantity*ticks}{currency}")
         # print("-------")
         # print("") 
 
